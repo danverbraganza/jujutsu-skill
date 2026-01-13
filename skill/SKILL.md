@@ -178,6 +178,33 @@ jj git clone <url>
 jj git init --colocate
 ```
 
+### Switching Between jj and git (Colocated Repos)
+
+In a colocated repository (where both `.jj/` and `.git/` exist), you can use both jj and git commands. However, there are important considerations:
+
+**Switching to git mode** (e.g., for merge workflows):
+```bash
+# First, ensure your jj working copy is clean
+jj st
+
+# Then checkout a branch with git
+git checkout <branch-name>
+```
+
+**Switching back to jj mode**:
+```bash
+# Use jj edit to resume working with jj
+jj edit <change-id>
+
+# Or simply run any jj command - it will snapshot the working copy
+jj st
+```
+
+**Important notes:**
+- Git may complain about uncommitted changes if jj's working copy differs from the git HEAD
+- Always ensure your work is committed in jj before switching to git
+- After git operations, jj will detect and incorporate the changes on next command
+
 ### Pushing Changes (Mirrored Repository Context)
 
 **NOTE**: You are likely working on a mirrored clone of the repository, not the original. This mirror has its own remote configured.
