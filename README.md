@@ -19,7 +19,7 @@ Jujutsu (jj) is a Git-compatible version control system that offers several adva
 - **Working copy as a commit**: The working directory is always a commit, automatically snapshotting changes
 - **No staging area**: Changes are moved directly between commits using `squash` and `split`
 - **Automatic rebasing**: Descendant commits are automatically rebased when parent commits change
-- **Mutable commits**: Commits can be freely edited, split, and squashed until pushed
+- **Mutable commits**: Commits can be freely edited, split, and squashed
 - **Change IDs**: Stable identifiers that persist across commit rewrites
 - **Conflict handling**: Conflicts can be committed and resolved later
 
@@ -50,7 +50,7 @@ The skill emphasizes:
 
 1. **Describe-first commits**: Use `jj desc -m "message"` before making changes
 2. **Atomic commits**: Each commit should represent one logical change
-3. **Commit quality preservation**: Leverage jj's mutability to refine commits before pushing
+3. **Commit quality preservation**: Leverage jj's mutability to refine commits
 4. **Clean history**: Use `squash`, `split`, and `absorb` to maintain a readable history
 
 ## Contributing

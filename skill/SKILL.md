@@ -1,6 +1,6 @@
 ---
 name: jj-vcs
-description: Guides agents through using the Jujutsu (jj) version control system. Activate when the user mentions jj, jujutsu, or when working in a repository with a .jj directory. Teaches proper workflow for atomic commits, change management, and git interoperability.
+description: Guides agents through using the Jujutsu (jj) version control system. Activate when the user mentions jj, jujutsu, or when working in a repository with a .jj directory. Teaches proper workflow for atomic commits and change management.
 ---
 
 # Jujutsu (jj) Version Control System
@@ -15,15 +15,14 @@ This skill helps you work with Jujutsu, a Git-compatible VCS with mutable commit
 
 In jj, your working directory is always a commit (referenced as `@`). Changes are automatically snapshotted when you run any jj command. There is no staging area.
 
-### Commits Are Mutable Until Pushed
+### Commits Are Mutable
 
-**CRITICAL**: Unlike git, jj commits can be freely modified until they are pushed to a remote. This enables a high-quality commit workflow:
+**CRITICAL**: Unlike git, jj commits can be freely modified. This enables a high-quality commit workflow:
 
 1. Create a commit with your intended message first
 2. Make your changes
 3. The commit automatically captures your work
 4. Refine the commit using `squash`, `split`, or `absorb` as needed
-5. Only push when the commit is polished
 
 ### Change IDs vs Commit IDs
 
@@ -155,22 +154,6 @@ jj bookmark delete my-feature
 
 ## Git Integration
 
-### Fetching and Pushing
-
-```bash
-# Fetch from remote
-jj git fetch
-
-# Push current bookmark to remote
-jj git push
-
-# Push specific bookmark
-jj git push -b my-feature
-
-# Push a change (creates/updates bookmark automatically)
-jj git push -c <change-id>
-```
-
 ### Working with Existing Git Repos
 
 ```bash
@@ -179,6 +162,45 @@ jj git clone <url>
 
 # Initialize jj in an existing git repo
 jj git init --colocate
+```
+
+### Pushing Changes (Mirrored Repository Context)
+
+**NOTE**: You are likely working on a mirrored clone of the repository, not the original. This mirror has its own remote configured.
+
+When the user asks you to push changes:
+
+```bash
+# Push a specific bookmark to the remote
+jj git push -b <bookmark-name>
+
+# Example: push the main bookmark
+jj git push -b main
+```
+
+**Before pushing, ensure:**
+1. Your bookmark points to the correct commit (bookmarks don't auto-advance like git branches)
+2. The commits are refined and atomic
+3. The user has explicitly requested the push
+
+**IMPORTANT**: Unlike git branches, jj bookmarks do not automatically move when you create new commits. You must manually update them before pushing:
+
+```bash
+# Move an existing bookmark to the current commit
+jj bookmark move my-feature -r @
+
+# Then push it
+jj git push -b my-feature
+```
+
+If no bookmark exists for your changes, create one first:
+
+```bash
+# Create a bookmark at the current commit
+jj bookmark create my-feature
+
+# Then push it
+jj git push -b my-feature
 ```
 
 ## Handling Conflicts
@@ -197,14 +219,13 @@ jj resolve
 
 ## Preserving Commit Quality
 
-**IMPORTANT**: Because commits are mutable, always refine before pushing:
+**IMPORTANT**: Because commits are mutable, always refine them:
 
 1. **Review your commit**: `jj show @` or `jj diff`
 2. **Is it atomic?** One logical change per commit
 3. **Is the message clear?** "Verb object" format, one sentence
 4. **Are there unrelated changes?** Use `jj split` to separate them
 5. **Should changes be elsewhere?** Use `jj squash` or `jj absorb`
-6. **Only push when satisfied**: `jj git push`
 
 ## Quick Reference
 
@@ -221,13 +242,12 @@ jj resolve
 | Auto-distribute | `jj absorb` |
 | Abandon commit | `jj abandon <id>` |
 | Create bookmark | `jj bookmark create <name>` |
-| Fetch from remote | `jj git fetch` |
-| Push to remote | `jj git push` |
+| Push bookmark | `jj git push -b <name>` |
 
 ## Best Practices Summary
 
 1. **Describe first**: Set the commit message before coding
 2. **One change per commit**: Keep commits atomic and focused
 3. **Use change IDs**: They're stable across rewrites
-4. **Refine before pushing**: Leverage mutability for clean history
+4. **Refine commits**: Leverage mutability for clean history
 5. **Embrace the workflow**: No staging area, no stashing - just commits
