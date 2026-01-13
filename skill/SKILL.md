@@ -9,6 +9,20 @@ This skill helps you work with Jujutsu, a Git-compatible VCS with mutable commit
 
 **Tested with jj v0.37.0** - Commands may differ in other versions.
 
+## Important: Automated/Agent Environment
+
+When running as an agent, **always use `-m` flags** to provide messages inline rather than relying on editor prompts:
+
+```bash
+# Always use -m to avoid editor prompts
+jj desc -m "message"      # NOT: jj desc
+jj new -m "message"       # NOT: jj new (then describe separately)
+jj squash -m "message"    # NOT: jj squash (which opens editor)
+jj commit -m "message"    # NOT: jj commit
+```
+
+Editor-based commands will fail in non-interactive environments.
+
 ## Core Concepts
 
 ### The Working Copy is a Commit
