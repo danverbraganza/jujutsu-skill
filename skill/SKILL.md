@@ -187,7 +187,7 @@ jj git push -b main
 
 ```bash
 # Move an existing bookmark to the current commit
-jj bookmark move my-feature -r @
+jj bookmark move my-feature --to @
 
 # Then push it
 jj git push -b my-feature
