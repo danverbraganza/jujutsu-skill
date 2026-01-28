@@ -11,17 +11,19 @@ This skill helps you work with Jujutsu, a Git-compatible VCS with mutable commit
 
 ## Important: Automated/Agent Environment
 
-When running as an agent, **always use `-m` flags** to provide messages inline rather than relying on editor prompts:
+When running as an agent:
+
+1. **Always use `-m` flags** to provide messages inline rather than relying on editor prompts:
 
 ```bash
 # Always use -m to avoid editor prompts
 jj desc -m "message"      # NOT: jj desc
-jj new -m "message"       # NOT: jj new (then describe separately)
 jj squash -m "message"    # NOT: jj squash (which opens editor)
-jj commit -m "message"    # NOT: jj commit
 ```
 
 Editor-based commands will fail in non-interactive environments.
+
+2. **Verify operations with `jj st`** after mutations (`squash`, `abandon`, `rebase`, `restore`) to confirm the operation succeeded.
 
 ## Core Concepts
 
@@ -29,14 +31,18 @@ Editor-based commands will fail in non-interactive environments.
 
 In jj, your working directory is always a commit (referenced as `@`). Changes are automatically snapshotted when you run any jj command. There is no staging area.
 
+There is no need to run `jj commit`.
+
 ### Commits Are Mutable
 
 **CRITICAL**: Unlike git, jj commits can be freely modified. This enables a high-quality commit workflow:
 
-1. Create a commit with your intended message first
-2. Make your changes
-3. The commit automatically captures your work
-4. Refine the commit using `squash`, `split`, or `absorb` as needed
+1. Use `jj new` to initialize a new, blank commit.
+2. Describe your intended changes first with `jj desc -m"Message"`
+3. Make your changes
+4. When complete, use `jj new` to initialize a new, blank commit and begin the process again.
+
+You may refine the commit using `jj squash` or `jj absorb` as needed
 
 ### Change IDs vs Commit IDs
 
@@ -67,8 +73,6 @@ jj st
 Each commit should represent ONE logical change. Use this format for commit messages:
 
 ```
-"Verb object" - exactly one sentence, no period
-
 Examples:
 - "Add validation to user input forms"
 - "Fix null pointer in payment processor"
@@ -99,10 +103,16 @@ jj diff
 jj new
 
 # Create new commit with message
-jj new -m "Commit message"
+jj new && jj desc -m "Commit message"
 
 # Edit an existing commit (working copy becomes that commit)
 jj edit <change-id>
+
+# Edit the previous commit
+jj prev -e
+
+# Edit the next commit
+jj next -e
 ```
 
 ## Refining Commits
@@ -114,22 +124,13 @@ Move changes from current commit into its parent:
 ```bash
 # Squash all changes into parent
 jj squash
-
-# Squash interactively (choose what to move)
-jj squash -i
 ```
+
+**Note**: `jj squash -i` opens an interactive UI and will hang in agent environments. Avoid it.
 
 ### Splitting Commits
 
-Divide a commit that does too much:
-
-```bash
-# Split current commit interactively
-jj split
-
-# Split a specific commit
-jj split -r <change-id>
-```
+**Warning**: `jj split` is interactive and will hang in agent environments. To divide a commit, use `jj restore` to move changes out, then create separate commits manually.
 
 ### Absorbing Changes
 
@@ -148,16 +149,41 @@ Remove a commit entirely (descendants are rebased to its parent):
 jj abandon <change-id>
 ```
 
+### Undoing Operations
+
+Reverse the last jj operation:
+
+```bash
+jj undo
+```
+
+This reverts the repository to its state before the previous command. Useful for recovering from mistakes like accidental `abandon`, `squash`, or `rebase`.
+
+### Restoring Files
+
+Discard changes to specific files or restore files from another revision:
+
+```bash
+# Discard all uncommitted changes in working copy (restore from parent)
+jj restore
+
+# Discard changes to specific files
+jj restore path/to/file.txt
+
+# Restore files from a specific revision
+jj restore --from <change-id> path/to/file.txt
+```
+
 ## Working with Bookmarks (Branches)
 
 Bookmarks are jj's equivalent to git branches:
 
 ```bash
 # Create a bookmark at current commit
-jj bookmark create my-feature
+jj bookmark create my-feature -r@
 
 # Move bookmark to a different commit
-jj bookmark move my-feature -r <change-id>
+jj bookmark move my-feature --to <change-id>
 
 # List bookmarks
 jj bookmark list
@@ -195,19 +221,14 @@ git checkout <branch-name>
 ```bash
 # Use jj edit to resume working with jj
 jj edit <change-id>
-
-# Or simply run any jj command - it will snapshot the working copy
-jj st
 ```
 
 **Important notes:**
 - Git may complain about uncommitted changes if jj's working copy differs from the git HEAD
-- Always ensure your work is committed in jj before switching to git
+- ALWAYS ensure your work is committed in jj before switching to git
 - After git operations, jj will detect and incorporate the changes on next command
 
-### Pushing Changes (Mirrored Repository Context)
-
-**NOTE**: You are likely working on a mirrored clone of the repository, not the original. This mirror has its own remote configured.
+### Pushing Changes
 
 When the user asks you to push changes:
 
@@ -246,17 +267,14 @@ jj git push -b my-feature
 
 ## Handling Conflicts
 
-jj allows committing conflicts - you can resolve them later:
+jj allows committing conflicts — you can resolve them later:
 
 ```bash
 # View conflicts
 jj st
-
-# Resolve conflicts with external tool
-jj resolve
-
-# Continue working despite conflicts - jj allows this
 ```
+
+**Agent conflict resolution**: Do not use `jj resolve` (interactive). Instead, edit the conflicted files directly to remove conflict markers, then run `jj st` to verify resolution.
 
 ## Preserving Commit Quality
 
@@ -264,8 +282,8 @@ jj resolve
 
 1. **Review your commit**: `jj show @` or `jj diff`
 2. **Is it atomic?** One logical change per commit
-3. **Is the message clear?** "Verb object" format, one sentence
-4. **Are there unrelated changes?** Use `jj split` to separate them
+3. **Is the message clear?** Use imperative verb phrase in sentence case format with no full stop: "Verb object"
+4. **Are there unrelated changes?** Use `jj restore` to move changes out, then create separate commits
 5. **Should changes be elsewhere?** Use `jj squash` or `jj absorb`
 
 ## Quick Reference
@@ -276,12 +294,13 @@ jj resolve
 | View status | `jj st` |
 | View log | `jj log` |
 | View diff | `jj diff` |
-| New commit | `jj new -m "message"` |
+| New commit | `jj new && jj desc -m "message"` |
 | Edit commit | `jj edit <id>` |
 | Squash to parent | `jj squash` |
-| Split commit | `jj split` |
 | Auto-distribute | `jj absorb` |
 | Abandon commit | `jj abandon <id>` |
+| Undo last operation | `jj undo` |
+| Restore files | `jj restore [paths]` |
 | Create bookmark | `jj bookmark create <name>` |
 | Push bookmark | `jj git push -b <name>` |
 
