@@ -1,6 +1,7 @@
 ---
 name: jj-vcs
 description: Guides agents through using the Jujutsu (jj) version control system. Activate when the user mentions jj, jujutsu, or when working in a repository with a .jj directory. Teaches proper workflow for atomic commits and change management.
+allowed-tools: Bash(jj *)
 ---
 
 # Jujutsu (jj) Version Control System
