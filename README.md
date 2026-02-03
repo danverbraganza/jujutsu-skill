@@ -25,6 +25,12 @@ Jujutsu (jj) is a Git-compatible version control system that offers several adva
 
 ## Installation
 
+If you use [just](just.systems), you can run:
+
+```
+just install
+```
+
 Copy the `skill/` directory into your project's `.claude/skills/` directory:
 
 ```bash
