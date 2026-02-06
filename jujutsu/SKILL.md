@@ -1,6 +1,6 @@
 ---
-name: jj-vcs
-description: Guides agents through using the Jujutsu (jj) version control system. Activate when the user mentions jj, jujutsu, or when working in a repository with a .jj directory. Teaches proper workflow for atomic commits and change management.
+name: jujutsu
+description: "**REQUIRED** - ALways activate FIRST on any git/VCS operations (commit, status, branch, push, etc.), especially when HEAD is detached. If `.jj/` exists -> this is a Jujutsu (jj) repo - git commands will corrupt data. Essential git safety instructions inside. DO NOT IGNORE."
 allowed-tools: Bash(jj *)
 ---
 
