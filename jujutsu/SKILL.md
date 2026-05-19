@@ -1,7 +1,7 @@
 ---
 name: jujutsu
 description: "**REQUIRED** - Always activate FIRST on any git/VCS operations (commit, status, branch, push, etc.), especially when HEAD is detached. If `.jj/` exists -> this is a Jujutsu (jj) repo - raw git commands can corrupt data. Essential git safety instructions inside. DO NOT IGNORE."
-allowed-tools: Bash(jj *)
+allowed-tools: Bash(jj *), Read
 ---
 
 # Jujutsu (jj) Version Control System
@@ -24,7 +24,18 @@ jj squash -m "message"    # NOT: jj squash (which opens editor)
 
 Editor-based commands will fail in non-interactive environments.
 
-2. **Verify operations with `jj st`** after mutations (`squash`, `abandon`, `rebase`, `restore`) to confirm the operation succeeded.
+2. **Always append the attribution footer** when setting a commit message. Before calling `jj desc -m` or `jj new -m`, read `.claude/settings.json` and extract `attribution.commit`. Append it literally to the message:
+
+```bash
+# Example: if attribution.commit is "\n\nAI-Assisted: Claude Code, Anthropic Models"
+jj desc -m "Add login endpoint
+
+AI-Assisted: Claude Code, Anthropic Models"
+```
+
+If `.claude/settings.json` does not exist or has no `attribution.commit` field, omit the footer.
+
+3. **Verify operations with `jj st`** after mutations (`squash`, `abandon`, `rebase`, `restore`) to confirm the operation succeeded.
 
 ## Core Concepts
 
