@@ -344,7 +344,10 @@ jj git push -b main
 **IMPORTANT**: Unlike git branches, jj bookmarks do not automatically move when you create new commits. You must manually update them before pushing:
 
 ```bash
-# Move an existing bookmark to the current commit
+# Preferred (jj 0.43+): advance the closest bookmark(s) behind @ up to @
+jj bookmark advance
+
+# Or move a specific bookmark explicitly
 jj bookmark move my-feature --to @
 
 # Then push it
