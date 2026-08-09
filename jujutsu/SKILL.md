@@ -41,7 +41,7 @@ Editor-based commands will fail in non-interactive environments.
 
 In jj, your working directory is always a commit (referenced as `@`). Changes are automatically snapshotted when you run any jj command. There is no staging area.
 
-There is no need to run `jj commit`.
+There is no need to run `jj commit` to finalize changes — the working copy is always a commit. Use `jj commit <paths>` only to commit a subset of files while keeping the rest in the working copy (see "Splitting Commits").
 
 ### Commits Are Mutable
 
@@ -161,6 +161,16 @@ jj split -m "Add search" src/search.txt
 ```
 
 Without paths, `jj split` opens an interactive diff editor, and without `-m` it opens an editor for the description. Neither works in an agent environment.
+
+To commit only some files while leaving the rest in the working copy, commit the given paths directly:
+
+```bash
+jj commit -m "type(scope): description" path/to/file1 path/to/file2
+```
+
+Only the given paths go into the new commit; all other working copy changes stay uncommitted.
+
+**Warning**: `jj restore <paths>` discards the changes to the given paths — it does not move them into another commit. Use `jj commit <paths>` instead when you want to keep those changes.
 
 ### Absorbing Changes
 
@@ -411,7 +421,7 @@ jj st
 1. **Review your commit**: `jj --no-pager show @` or `jj --no-pager diff --git`
 2. **Is it atomic?** One logical change per commit
 3. **Is the message clear?** Use imperative verb phrase in sentence case format with no full stop: e.g. "Add login endpoint", "Fix null pointer in payment processor", "Remove deprecated API endpoints"
-4. **Are there unrelated changes?** Use `jj split -m "message" <paths>` to move them into their own commit
+4. **Are there unrelated changes?** Use `jj commit <paths>` to commit the related files and keep the rest in the working copy, or `jj split -m "message" <paths>` to move them into their own commit
 5. **Should changes be elsewhere?** Use `jj squash` or `jj absorb`
 
 ## Quick Reference
