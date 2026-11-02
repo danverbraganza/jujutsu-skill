@@ -2,7 +2,8 @@ import json
 import subprocess
 
 from jj_eval.agent import AgentRun, Transcript
-from jj_eval.runner import Options, Result, compare, run_scenario, summarize
+from jj_eval.runner import Options, Result, compare, failed_calls, run_scenario, summarize
+from jj_eval.sandbox import Invocation
 from jj_eval.scenarios import SCENARIOS
 
 
@@ -68,3 +69,9 @@ def test_compare_lines_up_scenarios_across_runs():
 
     assert "| Scenario | jj-0.46.0 | jj-0.37.0 |" in text
     assert "| tag-release | pass (2 failed jj calls) | FAIL |" in text
+
+
+def test_a_jj_call_cut_off_by_a_closed_pipe_is_not_a_failure():
+    calls = [Invocation(0, "st"), Invocation(1, "edit nope"), Invocation(3, "log -p --git")]
+
+    assert failed_calls(calls) == ["edit nope"]

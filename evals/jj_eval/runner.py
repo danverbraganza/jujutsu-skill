@@ -10,10 +10,13 @@ from typing import Callable
 from jj_eval.agent import run_claude
 from jj_eval.binaries import jj_version
 from jj_eval.repo import CheckFailure
-from jj_eval.sandbox import Sandbox
+from jj_eval.sandbox import Invocation, Sandbox
 from jj_eval.scenario import Scenario
 
 SKILL_DIR = Path(__file__).resolve().parents[2] / "jujutsu"
+
+# jj exits 3 when its stdout closes early, as under `jj log -p | head`: the output was cut off, not refused.
+JJ_BROKEN_PIPE = 3
 
 
 @dataclass(frozen=True)
@@ -81,7 +84,7 @@ def run_scenario(
         cost_usd=final.get("total_cost_usd"),
         skill_invoked=run.transcript.skill_invoked,
         jj_calls=len(invocations),
-        jj_failures=[i.args for i in invocations if i.status != 0],
+        jj_failures=failed_calls(invocations),
         warnings=run.transcript.warnings(),
         editor_prompts=sb.editor_invocations(),
         git_commands=run.transcript.git_commands(),
@@ -90,6 +93,10 @@ def run_scenario(
     )
     (sb.root / "result.json").write_text(json.dumps(asdict(result), indent=2) + "\n")
     return result
+
+
+def failed_calls(invocations: list[Invocation]) -> list[str]:
+    return [i.args for i in invocations if i.status not in (0, JJ_BROKEN_PIPE)]
 
 
 def _check(scenario: Scenario, sb: Sandbox) -> str | None:
