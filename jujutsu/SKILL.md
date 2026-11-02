@@ -179,6 +179,15 @@ Remove a commit entirely (descendants are rebased to its parent):
 jj abandon <change-id>
 ```
 
+### Reverting Commits
+
+Undo a commit's changes with a new commit, keeping the original in history. `jj backout` no longer exists; use `jj revert`:
+
+```bash
+# Insert a commit that reverts <change-id> directly below the working copy
+jj revert -r <change-id> -B @
+```
+
 ### Undoing Operations
 
 Reverse the last jj operation:
@@ -405,6 +414,7 @@ jj st
 | Auto-distribute | `jj absorb` |
 | Rebase | `jj rebase -d <destination>` |
 | Abandon commit | `jj abandon <id>` |
+| Revert commit | `jj revert -r <id> -B @` |
 | Undo last operation | `jj undo` |
 | Restore files | `jj restore [paths]` |
 | Create bookmark | `jj bookmark create <name>` |
