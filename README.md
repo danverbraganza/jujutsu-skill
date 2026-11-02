@@ -59,6 +59,19 @@ The skill emphasizes:
 3. **Commit quality preservation**: Leverage jj's mutability to refine commits
 4. **Clean history**: Use `squash`, `split`, and `absorb` to maintain a readable history
 
+## Evals
+
+`evals/` holds end-state evals. Each one gives Claude Code, with this skill loaded, a plain-language
+request in a real colocated jj repo, runs it against an official jj release binary, and grades only
+the final state of the repo.
+
+```bash
+just eval-selftest    # check every scenario against jj 0.37.0 and 0.46.0, without an agent
+just eval 0.46.0      # run the scenarios with Claude Code against jj 0.46.0
+```
+
+See [evals/README.md](evals/README.md) for the scenarios and diagnostics.
+
 ## Contributing
 
 Contributions are welcome. Please ensure any changes are compatible with jj v0.37.0.
