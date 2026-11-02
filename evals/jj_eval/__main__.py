@@ -57,7 +57,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "compare":
-        print(compare({path.name: load_results(path) for path in args.runs}), end="")
+        labels = [path.name for path in args.runs]
+        if len(set(labels)) < len(labels):  # e.g. one jj version before and after a skill change
+            labels = [f"{path.parent.name}/{path.name}" for path in args.runs]
+        print(compare({label: load_results(path) for label, path in zip(labels, args.runs)}), end="")
         return 0
 
     binary = args.jj.resolve() if args.jj else ensure_jj(args.jj_version)

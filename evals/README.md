@@ -15,6 +15,8 @@ just eval 0.46.0                            # run all scenarios with Claude Code
 just eval 0.46.0 --model opus --jobs 8      # any `python -m jj_eval run` flag works
 just eval 0.46.0 --scenario commit-large-file --trials 3
 just eval-compare /tmp/jj-skill-eval/jj-0.37.0-sonnet /tmp/jj-skill-eval/jj-0.46.0-sonnet
+just eval 0.46.0 --work-dir /tmp/jj-skill-eval/after    # after editing the skill, keeping the old run
+just eval-compare /tmp/jj-skill-eval/jj-0.46.0-sonnet /tmp/jj-skill-eval/after/jj-0.46.0-sonnet
 ```
 
 `just eval` downloads the official jj release binary for that version into
