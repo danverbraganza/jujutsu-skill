@@ -198,6 +198,13 @@ jj undo
 
 This reverts the repository to its state before the previous command. Useful for recovering from mistakes like accidental `abandon`, `squash`, or `rebase`.
 
+Run `jj undo` again to step further back, and `jj redo` to step forward. `jj undo` takes no operation ID. To return to a specific operation, find it in the operation log and restore it:
+
+```bash
+jj --no-pager op log
+jj op restore <operation-id>
+```
+
 ### Rebasing Commits
 
 Move commits to a different parent:
@@ -416,6 +423,7 @@ jj st
 | Abandon commit | `jj abandon <id>` |
 | Revert commit | `jj revert -r <id> -B @` |
 | Undo last operation | `jj undo` |
+| Return to an operation | `jj op restore <operation-id>` |
 | Restore files | `jj restore [paths]` |
 | Create bookmark | `jj bookmark create <name>` |
 | Fetch remote | `jj git fetch` |
