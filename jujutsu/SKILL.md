@@ -152,7 +152,15 @@ jj squash
 
 ### Splitting Commits
 
-**Warning**: `jj split` is interactive and will hang in agent environments. To divide a commit, use `jj restore` to move changes out, then create separate commits manually.
+Pass the paths that should move into a new first commit, plus `-m` for its message:
+
+```bash
+# src/search.txt moves into a new commit described "Add search";
+# everything else stays in the original commit, which keeps its description
+jj split -m "Add search" src/search.txt
+```
+
+Without paths, `jj split` opens an interactive diff editor, and without `-m` it opens an editor for the description. Neither works in an agent environment.
 
 ### Absorbing Changes
 
@@ -379,7 +387,7 @@ jj st
 1. **Review your commit**: `jj --no-pager show @` or `jj --no-pager diff --git`
 2. **Is it atomic?** One logical change per commit
 3. **Is the message clear?** Use imperative verb phrase in sentence case format with no full stop: e.g. "Add login endpoint", "Fix null pointer in payment processor", "Remove deprecated API endpoints"
-4. **Are there unrelated changes?** Use `jj restore` to move changes out, then create separate commits
+4. **Are there unrelated changes?** Use `jj split -m "message" <paths>` to move them into their own commit
 5. **Should changes be elsewhere?** Use `jj squash` or `jj absorb`
 
 ## Quick Reference
@@ -393,6 +401,7 @@ jj st
 | New commit | `jj new -m "message"` (use `jj st` first; skip if `@` is empty) |
 | Edit commit | `jj edit <id>` |
 | Squash to parent | `jj squash` |
+| Split by path | `jj split -m "message" <paths>` |
 | Auto-distribute | `jj absorb` |
 | Rebase | `jj rebase -d <destination>` |
 | Abandon commit | `jj abandon <id>` |
