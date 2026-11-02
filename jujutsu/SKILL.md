@@ -238,6 +238,12 @@ jj restore path/to/file.txt
 jj restore --from <change-id> path/to/file.txt
 ```
 
+**Quote paths that contain fileset syntax.** jj reads file arguments as [fileset expressions](https://docs.jj-vcs.dev/latest/filesets/). A path with parentheses fails to parse, and a leading `~` means "everything except": `jj restore ~scratch.txt` discards the changes to every file *other than* `scratch.txt`. Wrap such paths as `file:"..."`, in single quotes for the shell:
+
+```bash
+jj restore 'file:"docs/notes (draft).md"' 'file:"~scratch.txt"'
+```
+
 ## Working with Bookmarks (Branches)
 
 Bookmarks are jj's equivalent to git branches:
