@@ -8,9 +8,9 @@ This repository provides an Agent Skill for Claude Code and other compatible AI 
 
 ## Compatibility
 
-**Tested with:** jj v0.37.0
+**Tested with:** jj v0.46.0
 
-This skill is designed for jj v0.37.0 and may work with other versions, though compatibility is not guaranteed.
+This skill is designed for jj v0.46.0 and may work with other versions, though compatibility is not guaranteed. The [latest eval run](evals/results/2026-11-03-jj-0.37.0-vs-0.46.0.md) passes on both v0.37.0 and v0.46.0.
 
 ## What is Jujutsu?
 
@@ -76,7 +76,7 @@ See [evals/README.md](evals/README.md) for credentials, the scenarios, and the d
 
 ## Contributing
 
-Contributions are welcome. Please ensure any changes are compatible with jj v0.37.0.
+Contributions are welcome. Please ensure any changes are compatible with jj v0.46.0; `just eval 0.46.0` checks this.
 
 ## License
 

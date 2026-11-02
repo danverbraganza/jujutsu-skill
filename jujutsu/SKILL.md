@@ -8,7 +8,7 @@ allowed-tools: Bash(jj *)
 
 This skill helps you work with Jujutsu, a Git-compatible VCS with mutable commits and automatic rebasing.
 
-**Tested with jj v0.37.0** - Commands may differ in other versions.
+**Tested with jj v0.46.0** - Commands may differ in other versions.
 
 ## Important: Automated/Agent Environment
 
