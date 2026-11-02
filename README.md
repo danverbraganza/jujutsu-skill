@@ -61,16 +61,18 @@ The skill emphasizes:
 
 ## Evals
 
-`evals/` holds end-state evals. Each one gives Claude Code, with this skill loaded, a plain-language
-request in a real colocated jj repo, runs it against an official jj release binary, and grades only
-the final state of the repo.
+`evals/` holds end-state evals run with [Harbor](https://harborframework.com/docs). Each one gives an
+agent with this skill loaded a plain-language request in a real colocated jj repo, inside a container
+with an official jj release, and grades only the final state of the repo. Any agent Harbor supports
+works, including Claude Code and pi.
 
 ```bash
-just eval-selftest    # check every scenario against jj 0.37.0 and 0.46.0, without an agent
-just eval 0.46.0      # run the scenarios with Claude Code against jj 0.46.0
+just eval-selftest 0.46.0              # check every scenario with Harbor's oracle and nop agents, no API calls
+just eval 0.46.0                       # run Claude Code on the scenarios against jj 0.46.0
+just eval 0.46.0 --agent pi --model anthropic/claude-sonnet-5
 ```
 
-See [evals/README.md](evals/README.md) for the scenarios and diagnostics.
+See [evals/README.md](evals/README.md) for credentials, the scenarios, and the diagnostics.
 
 ## Contributing
 

@@ -1,0 +1,6 @@
+#!/bin/bash
+# Records each jj command the agent runs and its exit status, then passes the status through.
+/usr/local/libexec/jj "$@"
+status=$?
+{ mkdir -p /logs/agent && printf '%s\t%s\n' "$status" "$(printf '%q ' "$@")" >> /logs/agent/jj-invocations.log; } 2>/dev/null
+exit $status

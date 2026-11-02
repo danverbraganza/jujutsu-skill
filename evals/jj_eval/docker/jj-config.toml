@@ -1,0 +1,6 @@
+[user]
+name = "Eval User"
+email = "eval@example.com"
+
+[ui]
+editor = "/usr/local/bin/jj-eval-editor"

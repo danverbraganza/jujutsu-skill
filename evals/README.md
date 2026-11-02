@@ -1,75 +1,87 @@
 # jj skill evals
 
 These evals check whether an agent using the `jujutsu` skill can get real
-work done in a real jj repo. Each scenario builds a colocated jj repo, asks
-Claude Code for an outcome in plain language ("Rebase my feature bookmark
-onto main"), and then inspects the repo. Only the end state is graded. The
-commands the agent ran do not affect pass or fail; they are recorded as
-diagnostics.
+work done in a real jj repo. Each scenario becomes a
+[Harbor](https://harborframework.com/docs) task: a container holding a
+colocated jj repo, a plain-language request ("Rebase my feature bookmark
+onto main"), and a check of the repo's end state. Only the end state is
+graded. The commands the agent ran are recorded as diagnostics.
+
+Harbor runs the agent, so any agent it supports works: `claude-code`,
+`pi`, `codex`, `gemini-cli`, `opencode`, and about 30 more.
 
 ## Running
 
+You need Docker and [uv](https://docs.astral.sh/uv/). Harbor itself runs
+through `uvx`, pinned in `jj_eval/__main__.py`.
+
 ```bash
-just eval-selftest                          # validate every scenario on jj 0.37.0 and 0.46.0; no agent, no API calls
-just eval 0.46.0                            # run all scenarios with Claude Code against jj 0.46.0
-just eval 0.46.0 --model opus --jobs 8      # any `python -m jj_eval run` flag works
-just eval 0.46.0 --scenario commit-large-file --trials 3
-just eval-compare /tmp/jj-skill-eval/jj-0.37.0-sonnet /tmp/jj-skill-eval/jj-0.46.0-sonnet
-just eval 0.46.0 --work-dir /tmp/jj-skill-eval/after    # after editing the skill, keeping the old run
-just eval-compare /tmp/jj-skill-eval/jj-0.46.0-sonnet /tmp/jj-skill-eval/after/jj-0.46.0-sonnet
+just eval-selftest 0.46.0     # oracle must pass and nop must fail every scenario; Docker only, no API calls
+just eval 0.46.0              # Claude Code on every scenario against jj 0.46.0
+just eval 0.46.0 --agent pi --model anthropic/claude-sonnet-5
+just eval 0.46.0 --trials 3 --jobs 8 --scenario commit-large-file
+just eval 0.46.0 --no-skill   # the same scenarios without the skill, as a baseline
+just eval-report /tmp/jj-skill-eval/jobs/jj-0.37.0-claude-code /tmp/jj-skill-eval/jobs/jj-0.46.0-claude-code
 ```
 
-`just eval` downloads the official jj release binary for that version into
-`~/.cache/jj-skill-eval/` (override with `JJ_EVAL_CACHE`), or tests a
-binary you name with `--jj PATH`. `--no-skill` runs the same scenarios
-without the skill, as a baseline. `python -m jj_eval list` prints every
-scenario and its prompt.
+Arguments after `--` go straight to `harbor run`, for example
+`just eval 0.46.0 -- --ae MY_VAR=1`. `python -m jj_eval list` prints every
+scenario and its prompt. `harbor view /tmp/jj-skill-eval/jobs` browses the
+trials, including each agent's trajectory.
 
-The self-test downloads jj 0.37.0 and 0.46.0 by default. Set
-`JJ_EVAL_VERSIONS=0.46.0,0.47.0` to test other versions.
+### Credentials
 
-## What a run looks like
+Agents run inside the containers, so they cannot use your keychain login.
+Put credentials in `evals/.env`, which git ignores; `just eval` passes it to
+Harbor with `--env-file`.
 
-Each run lives at a fixed path,
-`/tmp/jj-skill-eval/jj-<version>-<model>/<scenario>/trial-<n>/`, and is wiped
-at the start of the run:
+- **Claude Code on your subscription:** run `claude setup-token`, then add
+  `CLAUDE_CODE_OAUTH_TOKEN=<token>` and `CLAUDE_FORCE_OAUTH=1`.
+- **An API key:** add `ANTHROPIC_API_KEY=<key>`.
+- **pi:** add the key for the model's provider, for example
+  `ANTHROPIC_API_KEY` for `anthropic/...` models. `harbor agent auth pi`
+  lists what it reads.
 
-| Path | What it is |
+## How a run works
+
+`just eval VERSION` writes one Harbor task per scenario to
+`/tmp/jj-skill-eval/tasks/<run>/`. It then calls `harbor run` with
+`--skill ../jujutsu`, which installs the skill where the chosen agent looks
+for skills. Results land in `/tmp/jj-skill-eval/jobs/<run>/`, where `<run>`
+is `jj-<version>-<agent>[-<model>]`. Both directories are wiped at the start
+of a run.
+
+Each task's image installs the official jj release binary for that version.
+It then builds the starting repo with pinned seeds and timestamps, so the
+commit and change IDs are identical on every build. Finally it deletes the
+scenario code, so the agent cannot read the checks; Harbor copies the
+checks in only after the agent finishes.
+
+| Path in the container | What it is |
 |---|---|
-| `repo/` | The colocated jj repo the agent works in (its cwd) |
-| `origin.git/` | A bare git remote, for the push and fetch scenarios |
-| `bin/jj` | A shim that logs each jj call and its exit status, then runs the jj under test |
-| `bin/jj-eval-editor` | Stands in for `$EDITOR` and always fails, so an editor prompt errors immediately instead of hanging |
-| `jj-config.toml`, `gitconfig` | The only jj and git config in effect; your own config is ignored |
-| `plugin/` | The skill under test, loaded with `claude --plugin-dir` |
-| `transcript.jsonl` | Claude Code's `stream-json` output |
-| `jj-invocations.log` | Every jj command the agent ran, with its exit status |
-| `result.json` | The check outcome plus diagnostics |
-
-The run directory also gets `summary.md` and `results.json`.
-
-The agent runs `claude -p` with `--setting-sources project,local`,
-`--strict-mcp-config`, and auto-memory disabled. That keeps your
-`~/.claude/CLAUDE.md`, user skills, hooks, plugins, and MCP servers out of the
-run, so the skill in this repo is the only jj guidance the agent gets.
-Permissions are bypassed inside the sandbox.
-
-Setup is deterministic. Setup commands run with a pinned randomness seed
-and pinned timestamps, so a scenario's starting commit and change IDs are
-identical on every run of a given jj version.
+| `/app/repo` | The colocated jj repo the agent works in |
+| `/app/origin.git` | A bare git remote, for the push and fetch scenarios |
+| `/usr/local/bin/jj` | A shim that logs each jj call and its exit status, then runs the jj under test |
+| `/usr/local/libexec/jj` | The jj under test, which the checks call directly |
+| `/usr/local/bin/jj-eval-editor` | Stands in for `$EDITOR` and always fails, so an editor prompt errors instead of hanging |
+| `/logs/agent/jj-invocations.log` | Every jj command the agent ran |
 
 ## Diagnostics
 
-`summary.md` reports these per scenario, beyond pass or fail:
+Each trial reports these metrics in its `reward.json`, and Harbor averages
+them per job:
 
-- **Skill used**: whether the agent loaded the jujutsu skill.
-- **Failed jj calls**: jj commands that exited non-zero. A pass with failed
-  calls means the agent recovered from a mistake. This column shows most
-  version drift, for example a flag that was removed between versions.
-- **Warnings**: the distinct `Warning:` lines jj printed, such as
-  deprecations and refused snapshots.
-- **Editor prompts**: times jj or git tried to open an editor.
-- **Raw git commands**: shell commands that invoked `git` directly instead of jj.
+- **reward**: 1 if the end state is right, else 0.
+- **jj_calls**: how many jj commands the agent ran.
+- **failed_jj_calls**: jj commands that exited non-zero. A pass with failed
+  calls means the agent recovered from a mistake, which is where most
+  version drift shows, for example a flag removed between versions. Exit
+  status 3 is not counted: it means a pipe such as `| head` closed early.
+- **editor_prompts**: times jj or git tried to open an editor.
+
+The trial's `verifier/check.json` holds the failure message and the failed
+commands. `just eval-report` turns a job into a table, or lines up several
+jobs side by side.
 
 ## Scenarios
 
@@ -121,23 +133,22 @@ class CreateBookmark(Scenario):
     tags = ("everyday",)
     prompt = "Create a bookmark called feature-login on the commit that adds the login page."
 
-    def setup(self, sb):   # build the starting repo
+    def setup(self, sb):   # build the starting repo, at image build time
         stack(base_repo(sb), ("Add login page", {"src/login.txt": "login form\n"}))
 
     def check(self, sb):   # raise CheckFailure (via require) unless the end state is right
         bookmark = sb.repo.bookmark("feature-login")
         require(bookmark and bookmark.target == sb.repo.the("Add login page").commit_id, "...")
 
-    def solve(self, sb):   # one reference solution; only the self-test runs it
+    def solve(self, sb):   # one reference solution, which Harbor's oracle agent runs
         sb.repo.jj("bookmark", "create", "feature-login", "-r", "@-")
 ```
 
-`just eval-selftest` enforces three rules on every scenario, on every jj
-version:
-
-1. `check` fails on the untouched setup, so the scenario cannot pass by doing nothing.
-2. `check` passes after `solve`, so it can be passed.
-3. The prompt never names a jj command.
+Then run `just eval-selftest` for each jj version you care about. It
+requires `check` to accept the state after `solve` (the oracle agent) and to
+reject the untouched setup (the nop agent), so a scenario can be passed but
+not by doing nothing. `uv run pytest` checks, without Docker, that no prompt
+names a jj command.
 
 Write checks that accept any reasonable route to the outcome. Find commits
 by description (`repo.the("Add parser")`) rather than by change ID, because

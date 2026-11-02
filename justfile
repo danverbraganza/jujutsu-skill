@@ -4,14 +4,14 @@ help:
 install: 
     cp -r ./jujutsu/ ~/.claude/skills/jujutsu
 
-# Validate every eval scenario against real jj binaries (no agent, no API calls)
-eval-selftest:
-    cd evals && uv run pytest
+# Check every eval scenario with Harbor's oracle (must pass) and nop (must fail) agents; Docker only, no API calls
+eval-selftest version="0.46.0":
+    cd evals && uv run python -m jj_eval selftest --jj-version {{version}}
 
-# Run the agent eval against a jj release, e.g. `just eval 0.46.0 --model opus`
+# Run an agent on the eval scenarios with Harbor, e.g. `just eval 0.46.0 --agent pi --trials 3`
 eval version *args:
     cd evals && uv run python -m jj_eval run --jj-version {{version}} {{args}}
 
-# Line up finished eval runs side by side
-eval-compare +run_dirs:
-    cd evals && uv run python -m jj_eval compare {{run_dirs}}
+# Summarize a finished eval job, or line up several side by side
+eval-report +job_dirs:
+    cd evals && uv run python -m jj_eval report {{job_dirs}}

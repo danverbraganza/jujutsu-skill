@@ -108,16 +108,16 @@ def _records(output: str) -> list[str]:
 
 
 class JJRepo:
-    """One jj workspace. Every command gets a fresh, deterministic randomness seed."""
+    """One jj workspace. With `seeds`, every command gets the next randomness seed, for reproducible IDs."""
 
-    def __init__(self, root: Path, jj: Path, env: Mapping[str, str], seeds: Iterator[int]):
+    def __init__(self, root: Path, jj: Path, env: Mapping[str, str], seeds: Iterator[int] | None = None):
         self.root = root
         self._jj = jj
         self._env = dict(env)
         self._seeds = seeds
 
     def run(self, *args: str, check: bool = True) -> subprocess.CompletedProcess[bytes]:
-        env = {**self._env, "JJ_RANDOMNESS_SEED": str(next(self._seeds))}
+        env = self._env if self._seeds is None else {**self._env, "JJ_RANDOMNESS_SEED": str(next(self._seeds))}
         result = subprocess.run(
             [str(self._jj), *args], cwd=self.root, env=env, capture_output=True, stdin=subprocess.DEVNULL
         )

@@ -1,0 +1,5 @@
+#!/bin/sh
+# Stands in for $EDITOR: fails at once, so a command that opens an editor errors instead of hanging.
+{ mkdir -p /logs/agent && echo "$*" >> /logs/agent/editor-invocations.log; } 2>/dev/null
+echo "error: no interactive editor is available in this session" >&2
+exit 1

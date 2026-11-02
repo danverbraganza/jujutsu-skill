@@ -1,21 +1,14 @@
-"""A disposable directory holding one scenario run: the repo, its remote, and the agent's tooling.
+"""The fixed layout inside a task's container, where setup, checks, and reference solutions run.
 
-Layout under `root`:
-    repo/                    the colocated jj repo the agent works in (cwd)
-    origin.git/              bare git remote, for scenarios that push or fetch
-    bin/jj                   shim that logs each agent jj call, then runs the jj under test
-    bin/jj-eval-editor       stand-in editor that always fails, so editor prompts error fast
-    jj-config.toml           JJ_CONFIG for every jj call (the user's own config is ignored)
-    xdg-config/              XDG_CONFIG_HOME for jj, which keeps per-repo config there since 0.38
-    gitconfig                GIT_CONFIG_GLOBAL for every git call
-    plugin/                  the skill under test, packaged for `claude --plugin-dir`
+    /app/repo                          the colocated jj repo the agent works in
+    /app/origin.git                    bare git remote, for scenarios that push or fetch
+    /usr/local/libexec/jj              the jj under test, which the harness calls directly
+    /usr/local/bin/jj                  shim that logs each agent jj call, then runs the jj under test
+    /logs/agent/jj-invocations.log     what the shim logged
 """
 
 import itertools
-import json
 import os
-import shlex
-import shutil
 import subprocess
 from dataclasses import dataclass
 from functools import cached_property
@@ -24,57 +17,18 @@ from typing import Mapping
 
 from jj_eval.repo import JJRepo
 
+ROOT = Path("/app")
+JJ = Path("/usr/local/libexec/jj")
+AGENT_LOGS = Path("/logs/agent")
 FIXED_TIMESTAMP = "2026-01-01T00:00:00+00:00"
-
-# Keep auth and provider selection; drop the parent Claude Code session and its host.
-KEPT_CLAUDE_VARS = {
-    "CLAUDE_CODE_OAUTH_TOKEN",
-    "CLAUDE_CODE_USE_BEDROCK",
-    "CLAUDE_CODE_USE_VERTEX",
-    "CLAUDE_CODE_USE_FOUNDRY",
-    "CLAUDE_CONFIG_DIR",
+PINNED = {
+    "JJ_TIMESTAMP": FIXED_TIMESTAMP,
+    "JJ_OP_TIMESTAMP": FIXED_TIMESTAMP,
+    "JJ_OP_HOSTNAME": "eval-host",
+    "JJ_OP_USERNAME": "eval",
+    "GIT_AUTHOR_DATE": FIXED_TIMESTAMP,
+    "GIT_COMMITTER_DATE": FIXED_TIMESTAMP,
 }
-STRIPPED_PREFIXES = ("CLAUDE", "SCULPT", "JJ_", "GIT_", "_PYI_")
-STRIPPED_VARS = {"AI_AGENT", "IS_SANDBOX", "SESSION_TOKEN"}
-
-SHIM = """#!/bin/bash
-export XDG_CONFIG_HOME={xdg}
-{real} "$@"
-status=$?
-printf '%s\\t%s\\n' "$status" "$(printf '%q ' "$@")" >> {log}
-exit $status
-"""
-
-EDITOR = """#!/bin/sh
-echo "$*" >> {log}
-echo "error: no interactive editor is available in this session" >&2
-exit 1
-"""
-
-JJ_CONFIG = """[user]
-name = "Eval User"
-email = "eval@example.com"
-
-[ui]
-editor = [{editor}]
-"""
-
-GIT_CONFIG = """[user]
-\tname = Eval User
-\temail = eval@example.com
-[init]
-\tdefaultBranch = main
-[advice]
-\tdetachedHead = false
-"""
-
-
-def clean_environ() -> dict[str, str]:
-    return {
-        key: value
-        for key, value in os.environ.items()
-        if key in KEPT_CLAUDE_VARS or not (key.startswith(STRIPPED_PREFIXES) or key in STRIPPED_VARS)
-    }
 
 
 @dataclass(frozen=True)
@@ -84,89 +38,27 @@ class Invocation:
 
 
 class Sandbox:
-    def __init__(self, root: Path, jj: Path):
+    """`deterministic` pins seeds and timestamps, so a scenario's setup builds the same repo every time."""
+
+    def __init__(self, root: Path = ROOT, jj: Path = JJ, agent_logs: Path = AGENT_LOGS, deterministic: bool = False):
         self.root = root
         self.jj = jj
         self.repo_dir = root / "repo"
         self.origin_dir = root / "origin.git"
-        self.bin_dir = root / "bin"
-        self.jj_config = root / "jj-config.toml"
-        self.xdg_config_home = root / "xdg-config"
-        self.git_config = root / "gitconfig"
-        self.jj_log = root / "jj-invocations.log"
-        self.editor_log = root / "editor-invocations.log"
-        self._seeds = itertools.count(1)
-
-    @classmethod
-    def create(cls, root: Path, jj: Path) -> "Sandbox":
-        """Wipe `root` and lay out a fresh sandbox there."""
-        if root.exists():
-            shutil.rmtree(root)
-        root.mkdir(parents=True)
-        sandbox = cls(root.resolve(), jj)
-        sandbox._write_tooling()
-        return sandbox
-
-    def _write_tooling(self) -> None:
-        self.bin_dir.mkdir()
-        editor = self.bin_dir / "jj-eval-editor"
-        editor.write_text(EDITOR.format(log=shlex.quote(str(self.editor_log))))
-        shim = self.bin_dir / "jj"
-        shim.write_text(
-            SHIM.format(
-                xdg=shlex.quote(str(self.xdg_config_home)),
-                real=shlex.quote(str(self.jj)),
-                log=shlex.quote(str(self.jj_log)),
-            )
-        )
-        for script in (editor, shim):
-            script.chmod(0o755)
-        self.jj_config.write_text(JJ_CONFIG.format(editor=json.dumps(str(editor))))
-        self.git_config.write_text(GIT_CONFIG)
-
-    def _common_env(self) -> dict[str, str]:
-        return {
-            **clean_environ(),
-            "JJ_CONFIG": str(self.jj_config),
-            "GIT_CONFIG_GLOBAL": str(self.git_config),
-            "GIT_CONFIG_NOSYSTEM": "1",
-            "GIT_TERMINAL_PROMPT": "0",
-        }
-
-    def harness_env(self) -> dict[str, str]:
-        """Environment for setup and checks: pinned timestamps so setup is reproducible."""
-        return {
-            **self._common_env(),
-            "JJ_TIMESTAMP": FIXED_TIMESTAMP,
-            "JJ_OP_TIMESTAMP": FIXED_TIMESTAMP,
-            "JJ_OP_HOSTNAME": "eval-host",
-            "JJ_OP_USERNAME": "eval",
-            "XDG_CONFIG_HOME": str(self.xdg_config_home),
-            "GIT_AUTHOR_DATE": FIXED_TIMESTAMP,
-            "GIT_COMMITTER_DATE": FIXED_TIMESTAMP,
-        }
-
-    def agent_env(self) -> dict[str, str]:
-        """Environment for the agent: the jj shim first on PATH, and no usable editor."""
-        editor = str(self.bin_dir / "jj-eval-editor")
-        env = self._common_env()
-        env.update(
-            PATH=f"{self.bin_dir}{os.pathsep}{env.get('PATH', '')}",
-            EDITOR=editor,
-            VISUAL=editor,
-            GIT_EDITOR=editor,
-        )
-        return env
+        self.jj_log = agent_logs / "jj-invocations.log"
+        self.editor_log = agent_logs / "editor-invocations.log"
+        self._env = {**os.environ, **(PINNED if deterministic else {})}
+        self._seeds = itertools.count(1) if deterministic else None
 
     def open(self, path: Path) -> JJRepo:
-        return JJRepo(path, self.jj, self.harness_env(), self._seeds)
+        return JJRepo(path, self.jj, self._env, self._seeds)
 
     @cached_property
     def repo(self) -> JJRepo:
         return self.open(self.repo_dir)
 
     def init_repo(self) -> JJRepo:
-        self.repo_dir.mkdir()
+        self.repo_dir.mkdir(parents=True)
         self.repo.jj("git", "init", "--colocate")
         return self.repo
 
@@ -176,7 +68,7 @@ class Sandbox:
 
     def git(self, *args: str, cwd: Path, check: bool = True) -> str:
         return subprocess.run(
-            ["git", *args], cwd=cwd, env=self.harness_env(), capture_output=True, text=True, check=check
+            ["git", *args], cwd=cwd, env=self._env, capture_output=True, text=True, check=check
         ).stdout
 
     def git_commit(self, cwd: Path, message: str, files: Mapping[str, str | None]) -> str:
@@ -191,15 +83,6 @@ class Sandbox:
                 self.git("add", "--", path, cwd=cwd)
         self.git("commit", "-q", "-m", message, cwd=cwd)
         return self.git("rev-parse", "HEAD", cwd=cwd).strip()
-
-    def install_skill(self, skill_dir: Path) -> Path:
-        """Package `skill_dir` as a plugin directory for `claude --plugin-dir`."""
-        plugin = self.root / "plugin"
-        manifest = plugin / ".claude-plugin" / "plugin.json"
-        manifest.parent.mkdir(parents=True)
-        manifest.write_text(json.dumps({"name": "jujutsu", "version": "0.0.0", "description": "Skill under test"}))
-        shutil.copytree(skill_dir, plugin / "skills" / skill_dir.name)
-        return plugin
 
     def jj_invocations(self) -> list[Invocation]:
         """Every jj command the agent ran through the shim, with its exit status."""
