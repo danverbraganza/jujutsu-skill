@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 import subprocess
 
 
@@ -46,3 +47,13 @@ def test_install_skill_packages_a_plugin(sandbox, tmp_path):
 
     assert (plugin / "skills" / "jujutsu" / "SKILL.md").read_text().startswith("---")
     assert json.loads((plugin / ".claude-plugin" / "plugin.json").read_text())["name"] == "jujutsu"
+
+
+def test_jj_repo_config_stays_inside_the_sandbox(sandbox):
+    # jj >= 0.38 keeps repo config under $XDG_CONFIG_HOME/jj/repos/, outside the repo.
+    sandbox.init_repo()
+    harness_path = Path(sandbox.repo.jj("config", "path", "--repo").strip())
+    agent_path = Path(agent_jj(sandbox, "config", "path", "--repo").stdout.strip())
+
+    assert harness_path.resolve().is_relative_to(sandbox.root)
+    assert agent_path.resolve().is_relative_to(sandbox.root)

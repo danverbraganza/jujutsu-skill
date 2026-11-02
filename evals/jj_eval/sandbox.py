@@ -6,6 +6,7 @@ Layout under `root`:
     bin/jj                   shim that logs each agent jj call, then runs the jj under test
     bin/jj-eval-editor       stand-in editor that always fails, so editor prompts error fast
     jj-config.toml           JJ_CONFIG for every jj call (the user's own config is ignored)
+    xdg-config/              XDG_CONFIG_HOME for jj, which keeps per-repo config there since 0.38
     gitconfig                GIT_CONFIG_GLOBAL for every git call
     plugin/                  the skill under test, packaged for `claude --plugin-dir`
 """
@@ -37,6 +38,7 @@ STRIPPED_PREFIXES = ("CLAUDE", "SCULPT", "JJ_", "GIT_", "_PYI_")
 STRIPPED_VARS = {"AI_AGENT", "IS_SANDBOX", "SESSION_TOKEN"}
 
 SHIM = """#!/bin/bash
+export XDG_CONFIG_HOME={xdg}
 {real} "$@"
 status=$?
 printf '%s\\t%s\\n' "$status" "$(printf '%q ' "$@")" >> {log}
@@ -89,6 +91,7 @@ class Sandbox:
         self.origin_dir = root / "origin.git"
         self.bin_dir = root / "bin"
         self.jj_config = root / "jj-config.toml"
+        self.xdg_config_home = root / "xdg-config"
         self.git_config = root / "gitconfig"
         self.jj_log = root / "jj-invocations.log"
         self.editor_log = root / "editor-invocations.log"
@@ -109,7 +112,13 @@ class Sandbox:
         editor = self.bin_dir / "jj-eval-editor"
         editor.write_text(EDITOR.format(log=shlex.quote(str(self.editor_log))))
         shim = self.bin_dir / "jj"
-        shim.write_text(SHIM.format(real=shlex.quote(str(self.jj)), log=shlex.quote(str(self.jj_log))))
+        shim.write_text(
+            SHIM.format(
+                xdg=shlex.quote(str(self.xdg_config_home)),
+                real=shlex.quote(str(self.jj)),
+                log=shlex.quote(str(self.jj_log)),
+            )
+        )
         for script in (editor, shim):
             script.chmod(0o755)
         self.jj_config.write_text(JJ_CONFIG.format(editor=json.dumps(str(editor))))
@@ -132,6 +141,7 @@ class Sandbox:
             "JJ_OP_TIMESTAMP": FIXED_TIMESTAMP,
             "JJ_OP_HOSTNAME": "eval-host",
             "JJ_OP_USERNAME": "eval",
+            "XDG_CONFIG_HOME": str(self.xdg_config_home),
             "GIT_AUTHOR_DATE": FIXED_TIMESTAMP,
             "GIT_COMMITTER_DATE": FIXED_TIMESTAMP,
         }
