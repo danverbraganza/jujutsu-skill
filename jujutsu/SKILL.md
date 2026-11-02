@@ -211,17 +211,19 @@ Move commits to a different parent:
 
 ```bash
 # Rebase current branch onto a destination
-jj rebase -d <destination>
+jj rebase -o <destination>
 
 # Rebase a specific revision (without descendants) onto a destination
-jj rebase -r <change-id> -d <destination>
+jj rebase -r <change-id> -o <destination>
 
 # Rebase a revision and all its descendants
-jj rebase -s <change-id> -d <destination>
+jj rebase -s <change-id> -o <destination>
 
 # Rebase onto trunk (common: update your branch to latest main)
-jj rebase -d main
+jj rebase -o main
 ```
+
+`-o` is short for `--onto`. The older `-d`/`--destination` still works but is deprecated.
 
 ### Restoring Files
 
@@ -326,7 +328,7 @@ jj git fetch --remote <remote-name>
 jj git fetch -b <branch-name>
 ```
 
-After fetching, rebase your work onto the updated trunk: `jj rebase -d main`
+After fetching, rebase your work onto the updated trunk: `jj rebase -o main`
 
 ### Switching Between jj and git (Colocated Repos Only)
 
@@ -425,7 +427,7 @@ jj st
 | Squash to parent | `jj squash` |
 | Split by path | `jj split -m "message" <paths>` |
 | Auto-distribute | `jj absorb` |
-| Rebase | `jj rebase -d <destination>` |
+| Rebase | `jj rebase -o <destination>` |
 | Abandon commit | `jj abandon <id>` |
 | Revert commit | `jj revert -r <id> -B @` |
 | Undo last operation | `jj undo` |
