@@ -164,9 +164,9 @@ class Sandbox:
         self.open(self.root).jj("git", "clone", "--colocate", str(self.origin_dir), self.repo_dir.name)
         return self.repo
 
-    def git(self, *args: str, cwd: Path) -> str:
+    def git(self, *args: str, cwd: Path, check: bool = True) -> str:
         return subprocess.run(
-            ["git", *args], cwd=cwd, env=self.harness_env(), capture_output=True, text=True, check=True
+            ["git", *args], cwd=cwd, env=self.harness_env(), capture_output=True, text=True, check=check
         ).stdout
 
     def git_commit(self, cwd: Path, message: str, files: Mapping[str, str | None]) -> str:
