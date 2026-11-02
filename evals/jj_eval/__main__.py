@@ -168,6 +168,9 @@ def main(argv: list[str] | None = None) -> int:
         tasks_dir, args.work_dir / "jobs" / label, args.agent, trials=args.trials, jobs=args.jobs,
         model=args.model, skill_dir=None if args.no_skill else args.skill_dir.resolve(), extra=args.harbor_args,
     )
+    if not (job_dir / "result.json").exists():
+        print(f"harbor wrote no results to {job_dir}; see its output above", file=sys.stderr)
+        return 1
     trials = load_trials(job_dir)
     summary = summarize(label, trials)
     (job_dir / "summary.md").write_text(summary)
