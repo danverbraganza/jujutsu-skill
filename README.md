@@ -31,22 +31,22 @@ If you use [just](just.systems), you can run:
 just install
 ```
 
-Copy the `skill/` directory into your project's `.claude/skills/` directory:
+Copy the `jujutsu/` directory into your project's `.claude/skills/` directory:
 
 ```bash
-cp -r skill/ /path/to/your/project/.claude/skills/jj-vcs/
+cp -r jujutsu/ /path/to/your/project/.claude/skills/jujutsu/
 ```
 
 Or install it as a global skill:
 
 ```bash
-cp -r skill/ ~/.claude/skills/jj-vcs/
+cp -r jujutsu/ ~/.claude/skills/jujutsu/
 ```
 
 ## Skill Contents
 
 ```
-skill/
+jujutsu/
 └── SKILL.md    # Main skill file with jj workflow instructions
 ```
 
