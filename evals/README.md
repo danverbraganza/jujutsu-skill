@@ -32,8 +32,8 @@ trials, including each agent's trajectory.
 ### Credentials
 
 Agents run inside the containers, so they cannot use your keychain login.
-Put credentials in `evals/.env`, which git ignores; `just eval` passes it to
-Harbor with `--env-file`.
+Either export credentials in your shell, or put them in `evals/.env`, which
+git ignores; `just eval` passes that file to Harbor with `--env-file`.
 
 - **Claude Code on your subscription:** run `claude setup-token`, then add
   `CLAUDE_CODE_OAUTH_TOKEN=<token>` and `CLAUDE_FORCE_OAUTH=1`.
@@ -49,7 +49,9 @@ Harbor with `--env-file`.
 `--skill ../jujutsu`, which installs the skill where the chosen agent looks
 for skills. Results land in `/tmp/jj-skill-eval/jobs/<run>/`, where `<run>`
 is `jj-<version>-<agent>[-<model>]`. Both directories are wiped at the start
-of a run.
+of a run. Harbor installs the agent into every container, which can be slow
+when many download at once, so agent setup gets three times Harbor's default
+timeout, and a trial that dies before the agent runs is retried twice.
 
 Each task's image installs the official jj release binary for that version.
 It then builds the starting repo with pinned seeds and timestamps, so the

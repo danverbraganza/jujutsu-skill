@@ -18,6 +18,14 @@ SKILL_DIR = Path(__file__).resolve().parents[2] / "jujutsu"
 ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
 DEFAULT_WORK_DIR = Path("/tmp/jj-skill-eval")
 VERIFIER_LOGS = Path("/logs/verifier")
+# Installing an agent downloads it into every container. Under concurrency that can outlast Harbor's default
+# setup timeout, so allow longer, and retry trials that died before the agent ever ran.
+RESILIENCE = [
+    "--agent-setup-timeout-multiplier", "3",
+    "--max-retries", "2",
+    "--retry-include", "AgentSetupTimeoutError",
+    "--retry-include", "NetworkConnectionError",
+]
 # jj exits 3 when its stdout closes early, as under `jj log -p | head`: the output was cut off, not refused.
 JJ_BROKEN_PIPE = 3
 
@@ -56,7 +64,7 @@ def harbor_run(tasks_dir: Path, job_dir: Path, agent: str, *, trials: int, jobs:
                model: str | None = None, skill_dir: Path | None = None, extra: list[str] = ()) -> Path:
     shutil.rmtree(job_dir, ignore_errors=True)
     command = [*HARBOR, "run", "-p", str(tasks_dir), "-a", agent, "-k", str(trials), "-n", str(jobs),
-               "-o", str(job_dir.parent), "--job-name", job_dir.name]
+               "-o", str(job_dir.parent), "--job-name", job_dir.name, *RESILIENCE]
     if model:
         command += ["-m", model]
     if skill_dir:
