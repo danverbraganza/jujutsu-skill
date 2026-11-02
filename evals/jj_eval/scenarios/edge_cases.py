@@ -133,8 +133,8 @@ class AddWorkspace(Scenario):
     name = "add-workspace"
     tags = ("edge",)
     prompt = (
-        "Create a second workspace for this repo at ../repo-docs so I can work on docs in parallel. "
-        "Its working copy should start on top of main."
+        "Create a second workspace for this repo at ../repo-docs (a sibling of this directory) so I can work "
+        "on docs in parallel. Its working copy should start on top of main."
     )
 
     def setup(self, sb):

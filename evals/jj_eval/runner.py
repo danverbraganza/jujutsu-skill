@@ -1,6 +1,7 @@
 """Run scenarios against an agent, then summarize and compare the results."""
 
 import json
+import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -112,6 +113,8 @@ def run_all(
     on_result: Callable[[Result, int, int], None] = lambda result, done, total: None,
 ) -> list[Result]:
     """Run every scenario `trials` times, `jobs` at a time. Writes results.json and summary.md to `out_dir`."""
+    for scenario in scenarios:  # agents sometimes write outside their trial directory
+        shutil.rmtree(out_dir / scenario.name, ignore_errors=True)
     tasks = [(scenario, trial) for scenario in scenarios for trial in range(1, trials + 1)]
     results: list[Result] = []
     with ThreadPoolExecutor(max_workers=jobs) as pool:
