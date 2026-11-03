@@ -165,10 +165,10 @@ Without paths, `jj split` opens an interactive diff editor, and without `-m` it 
 To commit only some files while leaving the rest in the working copy, commit the given paths directly:
 
 ```bash
-jj commit -m "type(scope): description" path/to/file1 path/to/file2
+jj commit -m "Add API endpoint" path/to/file1 path/to/file2
 ```
 
-Only the given paths go into the new commit; all other working copy changes stay uncommitted.
+Only the given paths go into the new commit, which gets the message. All other changes move to a new working-copy commit `@` with no description, and stay uncommitted.
 
 **Warning**: `jj restore <paths>` discards the changes to the given paths — it does not move them into another commit. Use `jj commit <paths>` instead when you want to keep those changes.
 
@@ -436,6 +436,7 @@ jj st
 | Edit commit | `jj edit <id>` |
 | Squash to parent | `jj squash` |
 | Split by path | `jj split -m "message" <paths>` |
+| Commit some files | `jj commit -m "message" <paths>` |
 | Auto-distribute | `jj absorb` |
 | Rebase | `jj rebase -o <destination>` |
 | Abandon commit | `jj abandon <id>` |
