@@ -90,6 +90,7 @@ jobs side by side.
 | Scenario | Exercises |
 |---|---|
 | `commit-working-copy` | `jj commit`, or describe then new |
+| `commit-some-files` | `jj commit <paths>`: commit one file and leave another edit uncommitted; `jj restore` would discard it |
 | `reword-older-commit` | `jj describe -r` on a commit that has descendants |
 | `start-change-on-main` | `jj new main`, `jj bookmark create`, leaving in-progress work alone |
 | `create-bookmark` | `jj bookmark create -r` on a commit other than `@` |

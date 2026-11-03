@@ -36,6 +36,36 @@ class CommitWorkingCopy(Scenario):
         require_unchanged_after(repo, commit)
 
 
+class CommitSomeFiles(Scenario):
+    name = "commit-some-files"
+    tags = ("everyday",)
+    prompt = 'Commit only src/api.txt, with the message "Add API endpoint". Leave my other changes uncommitted.'
+    notes = "meeting at 10\n"
+    edited_notes = "meeting at 10\nbring the slides\n"
+
+    def setup(self, sb):
+        repo = base_repo(sb)
+        repo.commit("Add notes", {"docs/notes.md": self.notes})
+        repo.write("src/api.txt", "GET /api/items\n")
+        repo.write("docs/notes.md", self.edited_notes)
+
+    def solve(self, sb):
+        sb.repo.jj("commit", "-m", "Add API endpoint", "src/api.txt")
+
+    def check(self, sb):
+        repo = sb.repo
+        api = repo.the("Add API endpoint")
+        require_parent(repo, api, repo.the("Add notes"))
+        changed = repo.changed_paths(api.commit_id)
+        require(changed == {"src/api.txt"}, f"'Add API endpoint' should change only src/api.txt, but changes {changed}")
+        require_file(repo, api, "src/api.txt", "GET /api/items\n")
+        working_copy = repo.get("@")
+        require(working_copy.parents == (api.commit_id,), "the working copy should sit on top of 'Add API endpoint'")
+        require(not working_copy.description, "the remaining changes should stay uncommitted, with no description")
+        changed = repo.changed_paths("@")
+        require(changed == {"docs/notes.md"}, f"the working copy should hold only the docs/notes.md edit, not {changed}")
+        require_file(repo, "@", "docs/notes.md", self.edited_notes)
+
 class RewordOlderCommit(Scenario):
     name = "reword-older-commit"
     tags = ("everyday",)
