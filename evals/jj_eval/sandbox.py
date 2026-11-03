@@ -1,6 +1,6 @@
 """The fixed layout inside a task's container, where setup, checks, and reference solutions run.
 
-    /app/repo                          the colocated jj repo the agent works in
+    /app/repo                          the jj repo the agent works in; not colocated, so git commands fail in it
     /app/origin.git                    bare git remote, for scenarios that push or fetch
     /usr/local/libexec/jj              the jj under test, which the harness calls directly
     /usr/local/bin/jj                  shim that logs each agent jj call, then runs the jj under test
@@ -59,11 +59,11 @@ class Sandbox:
 
     def init_repo(self) -> JJRepo:
         self.repo_dir.mkdir(parents=True)
-        self.repo.jj("git", "init", "--colocate")
+        self.repo.jj("git", "init", "--no-colocate")
         return self.repo
 
     def clone_origin(self) -> JJRepo:
-        self.open(self.root).jj("git", "clone", "--colocate", str(self.origin_dir), self.repo_dir.name)
+        self.open(self.root).jj("git", "clone", "--no-colocate", str(self.origin_dir), self.repo_dir.name)
         return self.repo
 
     def git(self, *args: str, cwd: Path, check: bool = True) -> str:
