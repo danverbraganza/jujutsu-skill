@@ -376,12 +376,23 @@ jj git push -b main
 **IMPORTANT**: Unlike git branches, jj bookmarks do not automatically move when you create new commits. You must manually update them before pushing:
 
 ```bash
-# Move an existing bookmark to the current commit
+# Preferred (jj 0.39+): advance the closest bookmark(s) behind @ up to @
+jj bookmark advance
+
+# Or move a specific bookmark explicitly
 jj bookmark move my-feature --to @
 
 # Then push it
 jj git push -b my-feature
 ```
+
+If `@` is an empty working-copy commit, as it is after `jj commit` or `jj new`, your work ends at `@-`. Advance to that instead:
+
+```bash
+jj bookmark advance --to @-
+```
+
+A bare `jj bookmark advance` would put the bookmark on the empty commit, which jj refuses to push because it has no description. `advance` only moves bookmarks forward, so to recover, `jj undo` it.
 
 If no bookmark exists for your changes, create one first:
 
@@ -435,6 +446,7 @@ jj st
 | Restore files | `jj restore [paths]` |
 | Create bookmark | `jj bookmark create <name>` |
 | Fetch remote | `jj git fetch` |
+| Advance bookmark before pushing | `jj bookmark advance` (`--to @-` if `@` is empty) |
 | Push bookmark | `jj git push -b <name>` |
 | Add workspace | `jj workspace add <path>` |
 | List workspaces | `jj --no-pager workspace list` |

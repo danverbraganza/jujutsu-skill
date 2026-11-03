@@ -2,7 +2,7 @@
 
 from jj_eval.repo import require
 from jj_eval.scenario import Scenario
-from jj_eval.scenarios.fixtures import cloned_repo, origin_ref, push_to_origin, require_file
+from jj_eval.scenarios.fixtures import cloned_repo, origin_ref, push_to_origin, require_file, require_parent, stack
 
 README_V2 = "# Widget\n\nA small demo project.\n\nNow on main.\n"
 
@@ -107,3 +107,34 @@ class ForgetColleagueBookmark(Scenario):
             "colleague-wip@origin is still tracked with no local bookmark, so the next push deletes it on origin",
         )
         require(origin_ref(sb, "colleague-wip"), "colleague-wip was deleted on origin")
+
+
+class PushNewCommits(Scenario):
+    name = "push-new-commits"
+    tags = ("remote",)
+    prompt = "I've added two more commits on top of my feature branch since I last pushed it. Push them to origin."
+
+    def setup(self, sb):
+        repo = cloned_repo(sb)
+        search = repo.commit("Add search", {"src/search.txt": "search(query)\n"})
+        repo.jj("bookmark", "create", "feature", "-r", search.change_id)
+        repo.jj("bookmark", "track", "feature", "--remote", "origin")
+        repo.jj("git", "push", "-b", "feature")
+        stack(
+            repo,
+            ("Add search filters", {"src/filters.txt": "filter(results)\n"}),
+            ("Add search pagination", {"src/pages.txt": "page(results, n)\n"}),
+        )
+
+    def solve(self, sb):
+        sb.repo.jj("bookmark", "move", "feature", "--to", sb.repo.the("Add search pagination").change_id)
+        sb.repo.jj("git", "push", "-b", "feature")
+
+    def check(self, sb):
+        repo = sb.repo
+        tip = repo.the("Add search pagination")
+        require_parent(repo, tip, repo.the("Add search filters"))
+        require_parent(repo, repo.the("Add search filters"), repo.the("Add search"))
+        require(origin_ref(sb, "feature") == tip.commit_id, "origin's feature branch is not at 'Add search pagination'")
+        bookmark = repo.bookmark("feature")
+        require(bookmark and bookmark.target == tip.commit_id, "the local feature bookmark is not at 'Add search pagination'")
