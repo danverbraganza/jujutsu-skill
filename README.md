@@ -31,22 +31,22 @@ If you use [just](just.systems), you can run:
 just install
 ```
 
-Copy the `skill/` directory into your project's `.claude/skills/` directory:
+Copy the `jujutsu/` directory into your project's `.claude/skills/` directory:
 
 ```bash
-cp -r skill/ /path/to/your/project/.claude/skills/jj-vcs/
+cp -r jujutsu/ /path/to/your/project/.claude/skills/jujutsu/
 ```
 
 Or install it as a global skill:
 
 ```bash
-cp -r skill/ ~/.claude/skills/jj-vcs/
+cp -r jujutsu/ ~/.claude/skills/jujutsu/
 ```
 
 ## Skill Contents
 
 ```
-skill/
+jujutsu/
 └── SKILL.md    # Main skill file with jj workflow instructions
 ```
 
@@ -58,6 +58,21 @@ The skill emphasizes:
 2. **Atomic commits**: Each commit should represent one logical change
 3. **Commit quality preservation**: Leverage jj's mutability to refine commits
 4. **Clean history**: Use `squash`, `split`, and `absorb` to maintain a readable history
+
+## Evals
+
+`evals/` holds end-state evals run with [Harbor](https://harborframework.com/docs). Each one gives an
+agent with this skill loaded a plain-language request in a real colocated jj repo, inside a container
+with an official jj release, and grades only the final state of the repo. Any agent Harbor supports
+works, including Claude Code and pi.
+
+```bash
+just eval-selftest 0.46.0              # check every scenario with Harbor's oracle and nop agents, no API calls
+just eval 0.46.0                       # run Claude Code on the scenarios against jj 0.46.0
+just eval 0.46.0 --agent pi --model anthropic/claude-sonnet-5
+```
+
+See [evals/README.md](evals/README.md) for credentials, the scenarios, and the diagnostics.
 
 ## Contributing
 
