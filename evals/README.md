@@ -109,6 +109,7 @@ jobs side by side.
 | `set-commit-author` | `jj metaedit --author`; `jj describe --author` was removed in 0.42 |
 | `push-new-bookmark` | Pushing a never-pushed bookmark; 0.37 requires `jj bookmark track` first |
 | `push-undescribed-change` | jj refuses to push a commit with no description |
+| `push-new-commits` | `jj bookmark advance --to @-` before pushing: the working copy is empty, so the bookmark belongs on `@-` |
 | `fetch-and-rebase` | `jj git fetch`, then rebase onto the updated main |
 | `forget-colleague-bookmark` | `jj bookmark forget` rather than `delete`; delete would remove the branch from origin on the next push |
 | `commit-large-file` | A 3 MB file, over the default 1 MiB `snapshot.max-new-file-size` |
