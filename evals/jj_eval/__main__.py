@@ -35,6 +35,15 @@ def run_label(version: str, agent: str, model: str | None, skill: bool) -> str:
     return label + ("" if skill else "-no-skill")
 
 
+def distinct_labels(paths: list[Path]) -> list[str]:
+    """The shortest trailing part of each path that tells them all apart."""
+    for depth in range(1, max(len(path.parts) for path in paths) + 1):
+        labels = ["/".join(path.parts[-depth:]) for path in paths]
+        if len(set(labels)) == len(labels):
+            return labels
+    return [str(path) for path in paths]
+
+
 def check(name: str) -> None:
     """Grade the end state, writing Harbor's reward.json and the details to /logs/verifier."""
     sb = Sandbox()
@@ -147,9 +156,7 @@ def main(argv: list[str] | None = None) -> int:
         check(args.scenario)
         return 0
     if args.command == "report":
-        labels = [path.name for path in args.jobs]
-        if len(set(labels)) < len(labels):
-            labels = [f"{path.parent.name}/{path.name}" for path in args.jobs]
+        labels = distinct_labels(args.jobs)
         runs = {label: load_trials(path) for label, path in zip(labels, args.jobs)}
         print(summarize(labels[0], runs[labels[0]]) if len(runs) == 1 else compare(runs), end="")
         return 0

@@ -1,3 +1,5 @@
+import json
+
 import jj_eval.__main__ as cli
 
 
@@ -20,3 +22,17 @@ def test_run_retries_trials_whose_agent_never_got_installed(tmp_path, monkeypatc
     assert command[command.index("--agent-setup-timeout-multiplier") + 1] == "3"
     assert command[command.index("--max-retries") + 1] == "2"
     assert {"AgentSetupTimeoutError", "NetworkConnectionError"} <= set(command)
+
+
+def test_report_tells_apart_jobs_whose_paths_differ_further_up(tmp_path, capsys):
+    jobs = []
+    for skill, reward in (("baseline", 0), ("improved", 1)):
+        trial = tmp_path / skill / "jobs" / "jj-0.46.0-claude-code" / "tag-release__x"
+        trial.mkdir(parents=True)
+        (trial / "result.json").write_text(json.dumps({"task_name": "tag-release", "verifier_result": {"rewards": {"reward": reward}}}))
+        jobs.append(str(trial.parent))
+
+    assert cli.main(["report", *jobs]) == 0
+    out = capsys.readouterr().out
+    assert "| Scenario | baseline/jobs/jj-0.46.0-claude-code | improved/jobs/jj-0.46.0-claude-code |" in out
+    assert "| tag-release | FAIL | pass |" in out
