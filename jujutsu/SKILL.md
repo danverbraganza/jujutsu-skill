@@ -8,7 +8,7 @@ allowed-tools: Bash(jj *)
 
 This skill helps you work with Jujutsu, a Git-compatible VCS with mutable commits and automatic rebasing.
 
-**Tested with jj v0.37.0** - Commands may differ in other versions.
+**Tested with jj v0.46.0** - Commands may differ in other versions.
 
 ## Important: Automated/Agent Environment
 
@@ -152,7 +152,15 @@ jj squash
 
 ### Splitting Commits
 
-**Warning**: `jj split` is interactive and will hang in agent environments. To divide a commit, use `jj restore` to move changes out, then create separate commits manually.
+Pass the paths that should move into a new first commit, plus `-m` for its message:
+
+```bash
+# src/search.txt moves into a new commit described "Add search";
+# everything else stays in the original commit, which keeps its description
+jj split -m "Add search" src/search.txt
+```
+
+Without paths, `jj split` opens an interactive diff editor, and without `-m` it opens an editor for the description. Neither works in an agent environment.
 
 ### Absorbing Changes
 
@@ -171,6 +179,15 @@ Remove a commit entirely (descendants are rebased to its parent):
 jj abandon <change-id>
 ```
 
+### Reverting Commits
+
+Undo a commit's changes with a new commit, keeping the original in history. `jj backout` no longer exists; use `jj revert`:
+
+```bash
+# Insert a commit that reverts <change-id> directly below the working copy
+jj revert -r <change-id> -B @
+```
+
 ### Undoing Operations
 
 Reverse the last jj operation:
@@ -181,23 +198,32 @@ jj undo
 
 This reverts the repository to its state before the previous command. Useful for recovering from mistakes like accidental `abandon`, `squash`, or `rebase`.
 
+Run `jj undo` again to step further back, and `jj redo` to step forward. `jj undo` takes no operation ID. To return to a specific operation, find it in the operation log and restore it:
+
+```bash
+jj --no-pager op log
+jj op restore <operation-id>
+```
+
 ### Rebasing Commits
 
 Move commits to a different parent:
 
 ```bash
 # Rebase current branch onto a destination
-jj rebase -d <destination>
+jj rebase -o <destination>
 
 # Rebase a specific revision (without descendants) onto a destination
-jj rebase -r <change-id> -d <destination>
+jj rebase -r <change-id> -o <destination>
 
 # Rebase a revision and all its descendants
-jj rebase -s <change-id> -d <destination>
+jj rebase -s <change-id> -o <destination>
 
 # Rebase onto trunk (common: update your branch to latest main)
-jj rebase -d main
+jj rebase -o main
 ```
+
+`-o` is short for `--onto`. The older `-d`/`--destination` still works but is deprecated.
 
 ### Restoring Files
 
@@ -212,6 +238,12 @@ jj restore path/to/file.txt
 
 # Restore files from a specific revision
 jj restore --from <change-id> path/to/file.txt
+```
+
+**Quote paths that contain fileset syntax.** jj reads file arguments as [fileset expressions](https://docs.jj-vcs.dev/latest/filesets/). A path with parentheses fails to parse, and a leading `~` means "everything except": `jj restore ~scratch.txt` discards the changes to every file *other than* `scratch.txt`. Wrap such paths as `file:"..."`, in single quotes for the shell:
+
+```bash
+jj restore 'file:"docs/notes (draft).md"' 'file:"~scratch.txt"'
 ```
 
 ## Working with Bookmarks (Branches)
@@ -296,7 +328,7 @@ jj git fetch --remote <remote-name>
 jj git fetch -b <branch-name>
 ```
 
-After fetching, rebase your work onto the updated trunk: `jj rebase -d main`
+After fetching, rebase your work onto the updated trunk: `jj rebase -o main`
 
 ### Switching Between jj and git (Colocated Repos Only)
 
@@ -379,7 +411,7 @@ jj st
 1. **Review your commit**: `jj --no-pager show @` or `jj --no-pager diff --git`
 2. **Is it atomic?** One logical change per commit
 3. **Is the message clear?** Use imperative verb phrase in sentence case format with no full stop: e.g. "Add login endpoint", "Fix null pointer in payment processor", "Remove deprecated API endpoints"
-4. **Are there unrelated changes?** Use `jj restore` to move changes out, then create separate commits
+4. **Are there unrelated changes?** Use `jj split -m "message" <paths>` to move them into their own commit
 5. **Should changes be elsewhere?** Use `jj squash` or `jj absorb`
 
 ## Quick Reference
@@ -393,10 +425,13 @@ jj st
 | New commit | `jj new -m "message"` (use `jj st` first; skip if `@` is empty) |
 | Edit commit | `jj edit <id>` |
 | Squash to parent | `jj squash` |
+| Split by path | `jj split -m "message" <paths>` |
 | Auto-distribute | `jj absorb` |
-| Rebase | `jj rebase -d <destination>` |
+| Rebase | `jj rebase -o <destination>` |
 | Abandon commit | `jj abandon <id>` |
+| Revert commit | `jj revert -r <id> -B @` |
 | Undo last operation | `jj undo` |
+| Return to an operation | `jj op restore <operation-id>` |
 | Restore files | `jj restore [paths]` |
 | Create bookmark | `jj bookmark create <name>` |
 | Fetch remote | `jj git fetch` |
