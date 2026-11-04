@@ -3,9 +3,9 @@
 These evals check whether an agent using the `jujutsu` skill can get real
 work done in a real jj repo. Each scenario becomes a
 [Harbor](https://harborframework.com/docs) task: a container holding a
-colocated jj repo, a plain-language request ("Rebase my feature bookmark
-onto main"), and a check of the repo's end state. Only the end state is
-graded. The commands the agent ran are recorded as diagnostics.
+jj repo, a plain-language request ("Rebase my feature bookmark onto
+main"), and a check of the repo's end state. Only the end state is graded.
+The commands the agent ran are recorded as diagnostics.
 
 Harbor runs the agent, so any agent it supports works: `claude-code`,
 `pi`, `codex`, `gemini-cli`, `opencode`, and about 30 more.
@@ -59,9 +59,17 @@ commit and change IDs are identical on every build. Finally it deletes the
 scenario code, so the agent cannot read the checks; Harbor copies the
 checks in only after the agent finishes.
 
+The repo is not colocated with git: the harness creates it with
+`jj git init --no-colocate` or `jj git clone --no-colocate`. It has no
+`.git` directory, and jj keeps git's data in `.jj/repo/store/git`, so git
+commands run in the repo fail with `fatal: not a git repository`. In a
+colocated repo, raw git can produce end states the checks accept, so a
+pass would not show that the agent used jj. `jj git push` and
+`jj git fetch` work as usual.
+
 | Path in the container | What it is |
 |---|---|
-| `/app/repo` | The colocated jj repo the agent works in |
+| `/app/repo` | The jj repo the agent works in, not colocated, so git commands fail there |
 | `/app/origin.git` | A bare git remote, for the push and fetch scenarios |
 | `/usr/local/bin/jj` | A shim that logs each jj call and its exit status, then runs the jj under test |
 | `/usr/local/libexec/jj` | The jj under test, which the checks call directly |
@@ -116,7 +124,7 @@ jobs side by side.
 | `resolve-rebase-conflict` | Rebase conflict resolved by editing jj's conflict markers |
 | `discard-awkward-paths` | `jj restore` on `notes (draft).md` and `~scratch.txt`; unquoted, jj parses these as fileset syntax and `~` means "everything except" |
 | `stop-tracking-secret` | `jj file untrack` only works once the file is ignored |
-| `add-workspace` | `jj workspace add -r`; on 0.46 this also creates a git worktree |
+| `add-workspace` | `jj workspace add -r` |
 | `tag-release` | `jj tag set` |
 
 Sources: the commands in Danver Braganza's

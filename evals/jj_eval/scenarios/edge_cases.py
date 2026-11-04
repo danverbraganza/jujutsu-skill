@@ -123,9 +123,9 @@ class StopTrackingSecret(Scenario):
         repo = sb.repo
         require(repo.read("secrets.env") == self.secret, "secrets.env was changed or deleted on disk")
         require("secrets.env" not in repo.files("@"), "secrets.env is still tracked in the working copy")
-        # --no-index: the colocated git index still lists the file from the parent commit.
-        ignored = sb.git("check-ignore", "--no-index", "secrets.env", cwd=sb.repo_dir, check=False).strip()
-        require(ignored == "secrets.env", "secrets.env is not ignored, so the next snapshot will track it again")
+        # Snapshot with every new file auto-tracked: only an ignored file stays out.
+        tracked = repo.jj("--config", 'snapshot.auto-track="all()"', "file", "list", "-r", "@").splitlines()
+        require("secrets.env" not in tracked, "secrets.env is not ignored, so the next snapshot will track it again")
         require_file(repo, "@", "config.txt", "debug = false\n")
 
 
@@ -165,5 +165,5 @@ class TagRelease(Scenario):
         sb.repo.jj("tag", "set", "v1.0", "-r", sb.repo.the("Release 1.0").change_id)
 
     def check(self, sb):
-        tagged = sb.git("rev-parse", "--verify", "-q", "refs/tags/v1.0^{commit}", cwd=sb.repo_dir, check=False)
-        require(tagged.strip() == sb.repo.the("Release 1.0").commit_id, "v1.0 does not tag the 'Release 1.0' commit")
+        tagged = [commit.commit_id for commit in sb.repo.log('tags(exact:"v1.0")')]
+        require(tagged == [sb.repo.the("Release 1.0").commit_id], "v1.0 does not tag the 'Release 1.0' commit")
