@@ -57,9 +57,10 @@ class Sandbox:
     def repo(self) -> JJRepo:
         return self.open(self.repo_dir)
 
-    def init_repo(self) -> JJRepo:
+    def init_repo(self, colocate: bool = False) -> JJRepo:
+        """Scenarios about using jj and git together set `colocate`; in every other repo, git commands fail."""
         self.repo_dir.mkdir(parents=True)
-        self.repo.jj("git", "init", "--no-colocate")
+        self.repo.jj("git", "init", "--colocate" if colocate else "--no-colocate")
         return self.repo
 
     def clone_origin(self) -> JJRepo:

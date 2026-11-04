@@ -65,11 +65,13 @@ The repo is not colocated with git: the harness creates it with
 commands run in the repo fail with `fatal: not a git repository`. In a
 colocated repo, raw git can produce end states the checks accept, so a
 pass would not show that the agent used jj. `jj git push` and
-`jj git fetch` work as usual.
+`jj git fetch` work as usual. Scenarios about using jj and git together,
+tagged `interop`, opt in to a colocated repo with
+`base_repo(sb, colocate=True)`.
 
 | Path in the container | What it is |
 |---|---|
-| `/app/repo` | The jj repo the agent works in, not colocated, so git commands fail there |
+| `/app/repo` | The jj repo the agent works in, not colocated (except in `interop` scenarios), so git commands fail there |
 | `/app/origin.git` | A bare git remote, for the push and fetch scenarios |
 | `/usr/local/bin/jj` | A shim that logs each jj call and its exit status, then runs the jj under test |
 | `/usr/local/libexec/jj` | The jj under test, which the checks call directly |
@@ -126,6 +128,7 @@ jobs side by side.
 | `stop-tracking-secret` | `jj file untrack` only works once the file is ignored |
 | `add-workspace` | `jj workspace add -r` |
 | `tag-release` | `jj tag set` |
+| `check-out-branch-in-git` | Colocated: move uncommitted work out of the working copy, e.g. with `jj new`, before `git checkout release`; a bare `git checkout` leaves git's working tree dirty |
 
 Sources: the commands in Danver Braganza's
 [most frequently used jj commands](https://danverbraganza.com/writings/most-frequent-jj-commands),
