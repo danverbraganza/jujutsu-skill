@@ -59,17 +59,27 @@ The skill emphasizes:
 3. **Commit quality preservation**: Leverage jj's mutability to refine commits
 4. **Clean history**: Use `squash`, `split`, and `absorb` to maintain a readable history
 
-## Evals
+## Evaluation
 
-`evals/` holds end-state evals run with [Harbor](https://harborframework.com/docs). Each one gives an
-agent with this skill loaded a plain-language request in a real colocated jj repo, inside a container
-with an official jj release, and grades only the final state of the repo. Any agent Harbor supports
-works, including Claude Code and pi.
+In an end-to-end evaluation with [Harbor](https://harborframework.com/docs), the skill lets Claude Code
+complete 36% more tasks than it does without the skill: 100% of trials succeed with it (90 of 90), and
+73% without it (66 of 90). Both runs used the same 30 scenarios, three trials each, against jj 0.46.0.
+
+Each scenario gives the agent a plain-language request, such as "Rebase my feature bookmark onto main",
+in a real jj repo, and grades only the repo's end state. Most scenarios use a jj repo that is not
+colocated with git, so git commands fail and the agent has to use jj. Scenarios about using jj and git
+together run in a colocated repo. Only Claude Code has been tested so far, with `claude-sonnet-5-5`.
+
+### Running the evals
+
+`evals/` holds the scenarios and the harness. Each scenario runs in a container with an official jj
+release. Any agent Harbor supports works, including Claude Code and pi.
 
 ```bash
 just eval-selftest 0.46.0              # check every scenario with Harbor's oracle and nop agents, no API calls
 just eval 0.46.0                       # run Claude Code on the scenarios against jj 0.46.0
 just eval 0.46.0 --agent pi --model anthropic/claude-sonnet-5
+just eval 0.46.0 --no-skill            # the same scenarios without the skill, for comparison
 ```
 
 See [evals/README.md](evals/README.md) for credentials, the scenarios, and the diagnostics.
