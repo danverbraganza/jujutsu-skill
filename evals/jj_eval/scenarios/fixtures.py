@@ -13,9 +13,9 @@ APP = "app v1\n"
 INITIAL_FILES = {"README.md": README, "src/app.txt": APP}
 
 
-def base_repo(sb: Sandbox) -> JJRepo:
+def base_repo(sb: Sandbox, colocate: bool = False) -> JJRepo:
     """'Initial import' under a local `main` bookmark, with an empty working-copy commit on top."""
-    repo = sb.init_repo()
+    repo = sb.init_repo(colocate)
     initial = repo.commit("Initial import", INITIAL_FILES)
     repo.jj("bookmark", "create", "main", "-r", initial.change_id)
     return repo
