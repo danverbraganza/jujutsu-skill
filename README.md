@@ -77,17 +77,17 @@ together run in a colocated repo. Only Claude Code has been tested so far, with 
 release. Any agent Harbor supports works, including Claude Code and pi.
 
 ```bash
-just eval-selftest 0.46.0              # check every scenario with Harbor's oracle and nop agents, no API calls
-just eval 0.46.0                       # run Claude Code on the scenarios against jj 0.46.0
-just eval 0.46.0 --agent pi --model anthropic/claude-sonnet-5
-just eval 0.46.0 --no-skill            # the same scenarios without the skill, for comparison
+just eval-selftest 0.47.1              # check every scenario with Harbor's oracle and nop agents, no API calls
+just eval 0.47.1                       # run Claude Code on the scenarios against jj 0.47.1
+just eval 0.47.1 --agent pi --model anthropic/claude-sonnet-5
+just eval 0.47.1 --no-skill            # the same scenarios without the skill, for comparison
 ```
 
 See [evals/README.md](evals/README.md) for credentials, the scenarios, and the diagnostics.
 
 ## Contributing
 
-Contributions are welcome. Please ensure any changes are compatible with jj v0.46.0; `just eval 0.46.0` checks this.
+Contributions are welcome. Please ensure any changes are compatible with jj v0.47.1; `just eval 0.47.1` checks this.
 
 ## License
 

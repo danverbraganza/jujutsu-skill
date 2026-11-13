@@ -16,16 +16,16 @@ You need Docker and [uv](https://docs.astral.sh/uv/). Harbor itself runs
 through `uvx`, pinned in `jj_eval/__main__.py`.
 
 ```bash
-just eval-selftest 0.46.0     # oracle must pass and nop must fail every scenario; Docker only, no API calls
-just eval 0.46.0              # Claude Code on every scenario against jj 0.46.0
-just eval 0.46.0 --agent pi --model anthropic/claude-sonnet-5
-just eval 0.46.0 --trials 3 --jobs 8 --scenario commit-large-file
-just eval 0.46.0 --no-skill   # the same scenarios without the skill, as a baseline
+just eval-selftest 0.47.1     # oracle must pass and nop must fail every scenario; Docker only, no API calls
+just eval 0.47.1              # Claude Code on every scenario against jj 0.47.1
+just eval 0.47.1 --agent pi --model anthropic/claude-sonnet-5
+just eval 0.47.1 --trials 3 --jobs 8 --scenario commit-large-file
+just eval 0.47.1 --no-skill   # the same scenarios without the skill, as a baseline
 just eval-report /tmp/jj-skill-eval/jobs/jj-0.37.0-claude-code /tmp/jj-skill-eval/jobs/jj-0.46.0-claude-code
 ```
 
 Arguments after `--` go straight to `harbor run`, for example
-`just eval 0.46.0 -- --ae MY_VAR=1`. `python -m jj_eval list` prints every
+`just eval 0.47.1 -- --ae MY_VAR=1`. `python -m jj_eval list` prints every
 scenario and its prompt. `harbor view /tmp/jj-skill-eval/jobs` browses the
 trials, including each agent's trajectory.
 
