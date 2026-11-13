@@ -10,7 +10,7 @@ This repository provides an Agent Skill for Claude Code and other compatible AI 
 
 **Tested with:** jj v0.47.1
 
-This skill is designed for jj v0.47.1 and may work with other versions, though compatibility is not guaranteed. The [latest eval run](evals/results/2026-11-03-skill-improvements.md) passes on both v0.37.0 and v0.46.0.
+This skill is designed for jj v0.47.1 and may work with other versions, though compatibility is not guaranteed. The [latest eval run](evals/results/2026-11-13-jj-0.47.1.md) passes every scenario on v0.47.1, and [earlier runs](evals/results/2026-11-03-skill-improvements.md) pass on v0.37.0 and v0.46.0.
 
 ## What is Jujutsu?
 
@@ -64,6 +64,7 @@ The skill emphasizes:
 In an end-to-end evaluation with [Harbor](https://harborframework.com/docs), the skill lets Claude Code
 complete 36% more tasks than it does without the skill: 100% of trials succeed with it (90 of 90), and
 73% without it (66 of 90). Both runs used the same 30 scenarios, three trials each, against jj 0.46.0.
+On jj 0.47.1 the skill again passes 90 of 90 ([results](evals/results/2026-11-13-jj-0.47.1.md)).
 
 Each scenario gives the agent a plain-language request, such as "Rebase my feature bookmark onto main",
 in a real jj repo, and grades only the repo's end state. Most scenarios use a jj repo that is not
