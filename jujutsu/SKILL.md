@@ -8,7 +8,7 @@ allowed-tools: Bash(jj *)
 
 This skill helps you work with Jujutsu, a Git-compatible VCS with mutable commits and automatic rebasing.
 
-**Tested with jj v0.46.0** - Commands may differ in other versions.
+**Tested with jj v0.47.1** - Commands may differ in other versions.
 
 ## Important: Automated/Agent Environment
 
@@ -329,6 +329,8 @@ jj git fetch -b <branch-name>
 ```
 
 After fetching, rebase your work onto the updated trunk: `jj rebase -o main`
+
+**Note (jj 0.47+)**: In non-colocated workspaces, `jj git fetch` and `jj git push` no longer update Git's remote-tracking refs. Run `jj git export` when Git needs to see them.
 
 ### Switching Between jj and git (Colocated Repos Only)
 
